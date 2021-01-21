@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Four track</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+<main id="main-app-container">
+    <h1>Four track recorder</h1>
+    <div id="main-controls">
+        <button id="record" class="mainButton">Record</button>
+        <button id="play" class="mainButton">Play</button>
+        <button id="stop" class="mainButton" disabled>Stop</button>
+    </div>
+    <div class="fourTrack">
+        <div id="microphone">
+            <h3>Microphone</h3>
+            <label><input name="microphoneMute" type="checkbox" class="trackMute">Mute</label>
+        </div>
+        <div id="track1" class="track" data-track="1">
+            <h3>Track 1</h3>
+            <label><input name="trackMute1" type="checkbox" class="trackMute">Mute</label>
+            <label><input name="trackMix1" type="checkbox" class="trackMix">Mix</label>
+            <label><input name="trackArm1" type="checkbox" class="trackArm">Arm</label>
+            <button id="preview1">Preview</button>
+        </div>
+        <div id="track2" class="track" data-track="2">
+            <h3>Track 2</h3>
+            <label><input name="trackMute2" type="checkbox" class="trackMute">Mute</label>
+            <label><input name="trackMix2" type="checkbox" class="trackMix">Mix</label>
+            <label><input name="trackArm2" type="checkbox" class="trackArm">Arm</label>
+            <button id="preview2">Preview</button>
+        </div>
+        <div id="track3" class="track" data-track="3">
+            <h3>Track 3</h3>
+            <label><input name="trackMute3" type="checkbox" class="trackMute">Mute</label>
+            <label><input name="trackMix3" type="checkbox" class="trackMix">Mix</label>
+            <label><input name="trackArm3" type="checkbox" class="trackArm">Arm</label>
+            <button id="preview3">Preview</button>
+        </div>
+        <div id="track4" class="track" data-track="4">
+            <h3>Track 4</h3>
+            <label><input name="trackMute4" type="checkbox" class="trackMute">Mute</label>
+            <label><input name="trackMix4" type="checkbox" class="trackMix">Mix</label>
+            <label><input name="trackArm4" type="checkbox" class="trackArm">Arm</label>
+            <button id="preview4">Preview</button>
+        </div>
+    </div>
+
+    <h2>Recordings:</h2>
+    <ol id="recordingsList"></ol>
+
+</main>
+<aside id="startup-console">
+    This app requires microphone access it to work!
+</aside>
+</body>
+<script src="js/fourtrack.js"></script>
+<script src="js/app.js"></script>
+</html>
