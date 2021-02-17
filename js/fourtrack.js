@@ -3,7 +3,8 @@ const FourTrack = ((audioStream) => {
     // Settings
     const settings = Object.freeze({
         sampleRate: 44100,
-        bufferSize: 2048,
+        bufferSize: 1024,
+        latency: 0.064
     });
 
     // Get audio context
@@ -33,6 +34,8 @@ const FourTrack = ((audioStream) => {
         rightchannel: [],
         recording: false,
         recordingLength: 0,
+        commandTimeStamp: 0,
+        bufferOffset: 0,
         trackSetup: {
             tracks: []
         }
@@ -50,22 +53,33 @@ const FourTrack = ((audioStream) => {
     // stores incoming audio
     function recordAudio(e) {
         if (!recState.recording) return;
+
+        if (recState.recordingLength === 0) {
+            recState.bufferOffset = (performance.now() - recState.commandTimeStamp) / 1000;
+        }
+
         const left = e.inputBuffer.getChannelData(0);
         const right = e.inputBuffer.getChannelData(1);
-        recState.leftchannel.push(new Float32Array(left));
-        recState.rightchannel.push(new Float32Array(right));
+
+        // throwing away first buffer to counteract latency
+        //if (recState.recordingLength > 0) {
+            recState.leftchannel.push(new Float32Array(left));
+            recState.rightchannel.push(new Float32Array(right));
+        //}
         recState.recordingLength += settings.bufferSize;
     }
 
     function record(trackSetup) {
+
+
         // Start non muted tracks
         trackSetup.tracks.forEach((track, index) => {
 
-            const active = (track.mixed || !track.muted) && (trackBuffers[index] != null);
+            const active = (track.mixed || !track.muted) && (trackBuffers[index] !== null);
 
             if (active) {
                 const trackAudioSource = context.createBufferSource();
-                trackAudioSource.buffer = trackBuffers[index];
+                trackAudioSource.buffer = trackBuffers[index].buffer;
 
                 if (!track.muted) {
                     trackAudioSource.connect(context.destination);
@@ -75,7 +89,7 @@ const FourTrack = ((audioStream) => {
                     trackAudioSource.connect(volume);
                 }
 
-                trackAudioSource.start(0);
+                trackAudioSource.start(context.currentTime, settings.latency + trackBuffers[index].bufferOffset);
                 console.log('started track ' + index);
                 trackBufferSources[index] = trackAudioSource;
             }
@@ -88,6 +102,7 @@ const FourTrack = ((audioStream) => {
         recState.trackSetup = trackSetup;
 
         // Flag recording to be true *see recordAudio
+        recState.commandTimeStamp = performance.now();
         recState.recording = true;
     }
 
@@ -97,23 +112,26 @@ const FourTrack = ((audioStream) => {
 
         trackSetup.tracks.forEach((track, index) => {
             if (!track.muted) {
-                startTrack(index, 0)
+                startTrack(index, context.currentTime)
             }
         });
     }
 
     function startTrack(index, when) {
+
+        if (trackBuffers[index] === null) return;
+
         const trackAudioSource = context.createBufferSource();
-        trackAudioSource.buffer = trackBuffers[index];
+        trackAudioSource.buffer = trackBuffers[index].buffer;
         trackAudioSource.connect(context.destination);
-        trackAudioSource.start(when);
+        trackAudioSource.start(when + trackBuffers[index].bufferOffset);
         trackBufferSources[index] = trackAudioSource;
         console.log('started track ' + index);
     }
 
     function previewTrack(index) {
         stopAndDisonnect()
-        startTrack(index)
+        startTrack(index, context.currentTime)
     }
 
     function stop(wavBlobCallBack) {
@@ -139,7 +157,10 @@ const FourTrack = ((audioStream) => {
         // push recorded audio to track buffer
         trackBufferSources.forEach((trackAudioSource, index) => {
             if (recState.trackSetup.tracks[index].armed) {
-                trackBuffers[index] = justRecordedBuffer;
+                trackBuffers[index] = {
+                    buffer: justRecordedBuffer,
+                    bufferOffset: recState.bufferOffset
+                };
             }
         });
 
